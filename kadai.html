@@ -1,0 +1,126 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://unpkg.com/three@0.137.4/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.137.4/examples/js/controls/OrbitControls.js"></script>
+  </head>
+<body>
+ <h1>森を作成</h1>
+ ループで5本の木と5個の箱を作った<br>
+ <script>
+      // ページの読み込みを待つ
+      window.addEventListener('DOMContentLoaded', init);
+
+      function init() {
+        // サイズを指定
+        const width = 800
+        const height = 600;
+
+        // レンダラーを作成
+        var renderer = new THREE.WebGLRenderer();
+        document.body.appendChild(renderer.domElement);
+        renderer.setSize(width, height);
+        // 背景の色を設定
+        renderer.setClearColor(0x000000);  // 黒に設定
+
+        // シーンを作成
+        const scene = new THREE.Scene();
+
+        // カメラを作成
+        const camera = new THREE.PerspectiveCamera(45, width / height);
+        // カメラの初期座標を設定
+        camera.position.set(0, 0, 5);
+
+        // カメラコントローラーを作成
+        const controls = new THREE.OrbitControls(camera, document.body); 
+        
+        // 平行光源1
+        var directionalLight1 = new THREE.DirectionalLight(0xffffff);
+        directionalLight1.position.set(10, 10, 10);
+        // シーンに追加
+        scene.add(directionalLight1);
+        // 平行光源2
+        var directionalLight2 = new THREE.DirectionalLight(0x888888);
+        directionalLight2.position.set(-10, -10, 10);
+        // シーンに追加
+        scene.add(directionalLight2);
+
+        // helper
+        const gridHelper = new THREE.GridHelper(2,10); // size, step
+        scene.add(gridHelper);
+        const axisHelper = new THREE.AxisHelper(2); //軸の長さ　X：赤、Y：緑、z：青
+        scene.add(axisHelper);
+
+        //6面分のテクスチャー読み込み
+        var materials = [
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsl.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsr.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsu.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsd.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsf.png")}),
+          new THREE.MeshLambertMaterial({map:THREE.ImageUtils.loadTexture("img/img_bsb.png")}),
+        ];
+
+        var material = new THREE.MeshFaceMaterial(materials); // マテリアルをセット
+
+        // 箱を作成（5個作成）
+        let boxes = [];
+        let boxSpeeds = [];
+        for(let i=0; i<5; i++){
+            var geometry = new THREE.BoxGeometry(Math.random(), Math.random(), Math.random()); // Random size
+            var box = new THREE.Mesh(geometry, material);
+            let radius = 2*Math.random()+1; // Radius for the orbit
+            let angle = 2*Math.PI*Math.random(); // Initial position on the orbit
+            box.position.set(radius*Math.cos(angle), 0, radius*Math.sin(angle)); // Position on the orbit
+            scene.add(box); // ビルを追加
+            boxes.push(box);
+            boxSpeeds.push(Math.random()*0.05); // Random orbit speed
+        }
+
+        // 木をスプライトで作成
+        var textureLoader = new THREE.TextureLoader();  
+        var texture = textureLoader.load("img/tree0.png");
+        const treeMaterial = new THREE.SpriteMaterial({ map: texture,});
+
+        // 森を作成（5本作成）
+        let trees = [];
+        let treeSpeeds = [];
+        for (let i = 0; i < 5; i++) {
+          const sprite = new THREE.Sprite(treeMaterial);
+          let radius = 2*Math.random()+1; // Radius for the orbit
+          let angle = 2*Math.PI*Math.random(); // Initial position on the orbit
+          sprite.position.set(radius*Math.cos(angle), 0, radius*Math.sin(angle)); // Position on the orbit
+          scene.add(sprite);
+          trees.push(sprite);
+          treeSpeeds.push(Math.random()*0.05); // Random orbit speed
+        }
+        
+        update();
+
+        // 毎フレーム時に実行されるループイベントです
+        function update() {
+          // 箱と木がそれぞれ公転するように更新
+          for (let i = 0; i < 5; i++) {
+            let box = boxes[i];
+            let boxSpeed = boxSpeeds[i];
+            let tree = trees[i];
+            let treeSpeed = treeSpeeds[i];
+
+            // Calculate the new position
+            let boxRadius = Math.sqrt(box.position.x**2 + box.position.z**2);
+            let boxAngle = Math.atan2(box.position.z, box.position.x) + boxSpeed;
+            box.position.set(boxRadius*Math.cos(boxAngle), box.position.y, boxRadius*Math.sin(boxAngle));
+
+            let treeRadius = Math.sqrt(tree.position.x**2 + tree.position.z**2);
+            let treeAngle = Math.atan2(tree.position.z, tree.position.x) + treeSpeed;
+            tree.position.set(treeRadius*Math.cos(treeAngle), tree.position.y, treeRadius*Math.sin(treeAngle));
+          }
+
+          // レンダリング
+          renderer.render(scene, camera);
+          requestAnimationFrame(update);
+        }
+      }
+    </script>
+</body>
+</html>
